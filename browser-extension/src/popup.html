@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tax Law Assistant</title>
+  <link rel="stylesheet" href="styles/popup.css">
+</head>
+<body>
+  <div class="app-container">
+    <header>
+      <h1>Tax Law Assistant</h1>
+    </header>
+    
+    <div class="search-container">
+      <textarea id="query-input" placeholder="Ask a tax-related question..."></textarea>
+      <button id="search-button">Ask AI</button>
+    </div>
+    
+    <div class="result-container">
+      <div id="loading-indicator" class="hidden">
+        <div class="spinner"></div>
+        <p>Processing your query...</p>
+      </div>
+      <div id="result-content" class="hidden">
+        <h3>AI Response:</h3>
+        <div id="response-text"></div>
+        <div class="citation-container">
+          <h4>Citations:</h4>
+          <div id="citations-list"></div>
+        </div>
+        <div class="actions">
+          <button id="save-memo-button">Save as memo</button>
+          <button id="copy-button">Copy</button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="tabs">
+      <button class="tab-button active" data-tab="query">Ask</button>
+      <button class="tab-button" data-tab="memos">Memos</button>
+    </div>
+    
+    <div id="memos-container" class="tab-content hidden">
+      <div class="memos-header">
+        <h3>Saved Memos</h3>
+        <button id="clear-memos">Clear All</button>
+      </div>
+      <div id="memos-list"></div>
+    </div>
+  </div>
+
+  <!-- Modal for saving memo -->
+  <div id="memo-modal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close-modal">&times;</span>
+      <h3>Save Memo</h3>
+      <input type="text" id="memo-title" placeholder="Enter memo title...">
+      <select id="memo-category">
+        <option value="general">General</option>
+        <option value="individual">Individual Taxes</option>
+        <option value="business">Business Taxes</option>
+        <option value="deductions">Deductions</option>
+        <option value="credits">Tax Credits</option>
+      </select>
+      <button id="confirm-save-memo">Save</button>
+    </div>
+  </div>
+
+  <script src="storage/db.js"></script>
+  <script src="popup/popup.js"></script>
+</body>
+</html>

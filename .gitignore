@@ -1,0 +1,92 @@
+# General
+.env
+.DS_Store
+*.log
+logs/
+tmp/
+temp/
+
+# Java / Maven
+backend/target/
+backend/.settings/
+backend/.classpath
+backend/.project
+backend/.mvn/wrapper/maven-wrapper.jar
+backend/*.iml
+backend/.idea/
+
+# C++ / CMake
+rag-engine/build/
+rag-engine/CMakeFiles/
+rag-engine/CMakeCache.txt
+rag-engine/*.o
+rag-engine/*.so
+rag-engine/*.a
+rag-engine/*.exe
+rag-engine/.vscode/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+ai-agent/.venv/
+ai-agent/venv/
+ai-agent/ENV/
+ai-agent/.env
+ai-agent/*.egg-info/
+ai-agent/dist/
+ai-agent/build/
+
+# JavaScript / Node.js
+browser-extension/node_modules/
+browser-extension/dist/
+browser-extension/.cache/
+browser-extension/coverage/
+browser-extension/npm-debug.log
+browser-extension/yarn-error.log
+browser-extension/yarn-debug.log
+browser-extension/.pnp/
+browser-extension/.pnp.js
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+database/*.db-shm
+database/*.db-wal
+
+# Docker
+.dockerignore
+
+# IDE specific files
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+.project
+.classpath
+.settings/
+
+# Testing
+coverage/
+.coverage
+htmlcov/
+.pytest_cache/
+test-results/
+
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# Compiled files
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# OpenAI API keys and sensitive information
+**/openai_api_key.txt
+**/credentials.json
