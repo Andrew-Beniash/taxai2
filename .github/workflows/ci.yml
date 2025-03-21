@@ -1,0 +1,148 @@
+name: AI Tax Law Assistant CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+      
+    # Set up JDK for backend
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: maven
+    
+    # Set up Node.js for browser extension
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: browser-extension/package-lock.json
+    
+    # Set up Python for AI agent
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        cache: 'pip'
+    
+    # Install Python dependencies
+    - name: Install Python dependencies
+      run: |
+        cd ai-agent
+        pip install -r requirements.txt
+    
+    # Install Node.js dependencies
+    - name: Install Extension dependencies
+      run: |
+        cd browser-extension
+        npm ci
+    
+    # Build backend
+    - name: Build backend with Maven
+      run: |
+        cd backend
+        mvn -B package --file pom.xml
+    
+    # Build browser extension
+    - name: Build browser extension
+      run: |
+        cd browser-extension
+        npm run build
+    
+    # Run backend tests
+    - name: Run backend tests
+      run: |
+        cd backend
+        mvn test
+    
+    # Run browser extension tests
+    - name: Run extension tests
+      run: |
+        cd browser-extension
+        npm test
+    
+    # Run AI agent tests
+    - name: Run AI agent tests
+      run: |
+        cd ai-agent
+        python -m pytest
+    
+    # Build and test RAG engine
+    - name: Build and test RAG engine
+      run: |
+        cd rag-engine
+        mkdir -p build && cd build
+        cmake ..
+        make
+        make test
+  
+  docker-build:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    # Set up Docker Buildx
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+    
+    # Login to GitHub Container Registry
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v2
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    # Build and push backend image
+    - name: Build and push backend image
+      uses: docker/build-push-action@v4
+      with:
+        context: ./backend
+        push: true
+        tags: ghcr.io/${{ github.repository }}/backend:${{ github.sha }},ghcr.io/${{ github.repository }}/backend:latest
+    
+    # Build and push RAG engine image
+    - name: Build and push RAG engine image
+      uses: docker/build-push-action@v4
+      with:
+        context: ./rag-engine
+        push: true
+        tags: ghcr.io/${{ github.repository }}/rag-engine:${{ github.sha }},ghcr.io/${{ github.repository }}/rag-engine:latest
+    
+    # Build and push AI agent image
+    - name: Build and push AI agent image
+      uses: docker/build-push-action@v4
+      with:
+        context: ./ai-agent
+        push: true
+        tags: ghcr.io/${{ github.repository }}/ai-agent:${{ github.sha }},ghcr.io/${{ github.repository }}/ai-agent:latest
+  
+  deploy:
+    needs: docker-build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    # Deploy to local server using deployment script
+    - name: Deploy to local environment
+      run: |
+        chmod +x ./deploy.sh
+        ./deploy.sh ${{ github.sha }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
