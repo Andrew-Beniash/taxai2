@@ -1,0 +1,41 @@
+{
+  "documents": [
+    {
+      "source": "IRS",
+      "url": "https://www.irs.gov/pub/irs-pdf/p17.pdf",
+      "type": "pdf",
+      "description": "IRS Publication 17 - Your Federal Income Tax"
+    },
+    {
+      "source": "IRS",
+      "url": "https://www.irs.gov/pub/irs-pdf/p535.pdf",
+      "type": "pdf",
+      "description": "IRS Publication 535 - Business Expenses"
+    },
+    {
+      "source": "IRS",
+      "url": "https://www.irs.gov/pub/irs-pdf/p590b.pdf",
+      "type": "pdf",
+      "description": "IRS Publication 590-B - Distributions from IRAs"
+    },
+    {
+      "source": "Tax Court",
+      "url": "https://www.ustaxcourt.gov/opinions/2023/",
+      "type": "html",
+      "description": "Recent Tax Court Opinions",
+      "recursive": true
+    },
+    {
+      "source": "IRS",
+      "url": "https://www.irs.gov/newsroom/news-releases-for-current-month",
+      "type": "html",
+      "description": "IRS News Releases"
+    }
+  ],
+  "updateFrequency": {
+    "IRS Publications": "monthly",
+    "Tax Court Opinions": "weekly",
+    "IRS News": "daily"
+  },
+  "fileTypes": ["pdf", "html", "docx", "txt"]
+}
