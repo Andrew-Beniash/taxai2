@@ -1,0 +1,9 @@
+{
+  "source": "IRS",
+  "url": "https://www.irs.gov/pub/irs-pdf/p590b.pdf",
+  "downloaded_at": "2025-03-20T22:06:38.132275",
+  "file_type": "pdf",
+  "processed_at": "2025-03-20T22:06:40.721824",
+  "original_file": "data/downloads/p590b.pdf",
+  "processed_file": "data/processed/p590b.processed.txt"
+}
