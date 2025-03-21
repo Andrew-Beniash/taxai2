@@ -1,84 +1,108 @@
-# Tax Law Fetcher Agent
+# Tax Law AI Agent
 
-This component is part of the AI-Powered Tax Law Assistant system. It's responsible for autonomously monitoring and retrieving tax law updates from various sources, preprocessing the documents, and storing them for use by the RAG system.
+This is an autonomous AI agent that maintains the RAG database with tax-related documents. It continuously monitors updates in IRS regulations, court rulings, and firm-specific policies.
 
 ## Features
 
-- Automatic monitoring of IRS.gov, US Tax Court, and other tax law sources
-- Document download and text extraction from PDFs
-- Clean and structured storage of tax law documents
-- Scheduled fetching and processing of updates
-- Automatic cleanup of outdated documents
+- **Document Fetching**: Automatically downloads tax documents from configured sources
+- **Document Processing**: Extracts and processes text from different file formats
+- **RAG Integration**: Indexes processed documents into the RAG system
+- **Scheduled Updates**: Runs daily/weekly/monthly updates based on configuration
+- **Upload API**: Provides an API for uploading firm-specific documents
+- **Health Monitoring**: Ensures the system and data are healthy
 
-## Setup Instructions
+## Setup
 
-1. Create a virtual environment (optional but recommended):
-   ```
-   python3 -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-
+1. Clone the repository
 2. Install dependencies:
-   ```
+   ```bash
    pip install -r requirements.txt
    ```
-
-3. Create your environment variables file:
+3. Make the run script executable:
+   ```bash
+   chmod +x run.sh
    ```
-   cp .env.example .env
-   ```
 
-4. Edit the `.env` file and add your OpenAI API key (required for future RAG integration).
+## Configuration
 
-## Running the Agent
+Edit the `src/config/sources.json` file to configure document sources:
 
-You can run the agent using the provided shell script:
-
+```json
+{
+  "documents": [
+    {
+      "source": "IRS",
+      "url": "https://www.irs.gov/pub/irs-pdf/p17.pdf",
+      "type": "pdf",
+      "description": "IRS Publication 17 - Your Federal Income Tax"
+    },
+    ...
+  ],
+  "updateFrequency": {
+    "IRS Publications": "monthly",
+    "Tax Court Opinions": "weekly",
+    "IRS News": "daily"
+  },
+  "fileTypes": ["pdf", "html", "docx", "txt"]
+}
 ```
-chmod +x run.sh  # Make script executable (only needed once)
+
+## Usage
+
+### Running the Agent
+
+To start the agent with default settings:
+```bash
 ./run.sh
 ```
 
-Or run it directly:
+This will:
+1. Start the Upload API on port 5005
+2. Initialize the scheduler for automatic updates
+3. Run in the background, monitoring for tax law updates
 
+### Command Line Options
+
+The agent supports various command line options:
+
+```bash
+./run.sh --fetch-now       # Fetch documents immediately
+./run.sh --rebuild-index   # Rebuild the entire index
+./run.sh --health-check    # Run health checks
+./run.sh --api-only        # Run only the upload API server
+./run.sh --api-port 5005   # Specify a custom port for the API
+./run.sh --config path/to/config.json  # Use a custom config file
 ```
-python src/main.py
+
+### Uploading Custom Documents
+
+You can upload firm-specific documents using the Upload API:
+
+```bash
+curl -X POST -F "file=@/path/to/firm_policy.pdf" \
+     -F "metadata={\"source\":\"Firm\",\"type\":\"Policy\",\"description\":\"Internal Tax Procedure\"}" \
+     http://localhost:5005/upload
 ```
 
-## Directory Structure
+Or check uploaded documents:
+```bash
+curl http://localhost:5005/documents
+```
 
-- `/src` - Source code for the agent
-  - `/fetcher` - Code for retrieving tax law updates
-  - `/preprocessing` - Code for processing and storing documents
-  - `/scheduler` - Code for scheduling periodic updates
-  - `main.py` - Entry point for the application
-  - `config.py` - Configuration settings
-- `/data` - Directory for storing downloaded and processed documents
-  - `/pdfs` - Storage for downloaded PDF files
-  - `/texts` - Storage for extracted text content
-  - `/metadata` - Metadata about downloads and processing
+## Monitoring
 
-## How It Works
+Health checks are automatically run every hour. You can check the health status:
 
-1. The scheduler runs the fetcher at regular intervals (default: daily)
-2. The fetcher checks various tax law sources for new documents
-3. New documents are downloaded and passed to the document processor
-4. The processor extracts text from PDFs and cleans the content
-5. Processed documents are stored in the database and filesystem
-6. A separate scheduled job removes outdated documents periodically
+```bash
+cat data/stats/health_status.json
+```
 
-## Customization
+Logs are available in the `logs` directory.
 
-You can customize the agent's behavior by:
+## Integration with RAG System
 
-1. Modifying the configuration in `src/config.py`
-2. Setting environment variables in the `.env` file
-3. Adding new data sources in the fetcher module
+The agent is designed to integrate with a RAG system. Documents are indexed using the RAG API endpoint configured in `src/indexing/indexer.py`.
 
-## Security Note
+## License
 
-When running in production, ensure that:
-
-1. The OpenAI API key is securely stored
-2. The database is properly secured
-3. The agent runs with appropriate permissions
+[Your license information]
