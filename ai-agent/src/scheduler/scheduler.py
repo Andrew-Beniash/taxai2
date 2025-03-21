@@ -1,177 +1,179 @@
 """
-This module provides scheduling functionality for periodic tax law updates.
-It uses APScheduler to automate the fetching and processing of tax law documents
-at regular intervals.
+Document Scheduler Module
+
+This module handles scheduling periodic tasks for document retrieval and indexing.
+It uses APScheduler to run jobs at specified intervals.
 """
 
+import json
 import logging
-import time
-import signal
-import sys
-from datetime import datetime, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
-from apscheduler.triggers.interval import IntervalTrigger
-import sys
+from datetime import datetime
 import os
 
-# Add parent directory to path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+# Import our components
+from src.fetcher.document_fetcher import DocumentFetcher
+from src.preprocessing.processor import DocumentProcessor
+from src.indexing.indexer import DocumentIndexer
+from src.monitoring.health_check import HealthMonitor
 
-# Import configuration
-from src.config import FETCH_INTERVAL_HOURS, CLEANUP_INTERVAL_DAYS
-
-# Initialize logger
-logger = logging.getLogger('ai_tax_agent.scheduler')
-
-
-class TaxLawUpdateScheduler:
-    """Scheduler for automating tax law updates."""
+class DocumentScheduler:
+    """Schedule periodic tasks for document retrieval and indexing"""
     
-    def __init__(self, fetcher, processor):
-        """
-        Initialize the scheduler with the fetcher and processor components.
-        
-        Args:
-            fetcher: An instance of IRSUpdateFetcher for fetching updates
-            processor: An instance of DocumentProcessor for processing documents
-        """
-        self.fetcher = fetcher
-        self.processor = processor
+    def __init__(self, config_path='src/config/sources.json'):
+        """Initialize scheduler with configuration"""
         self.scheduler = BackgroundScheduler()
-        self.setup_jobs()
-    
-    def setup_jobs(self):
-        """Set up scheduled jobs for fetching and processing tax law updates."""
-        # Job for fetching and processing tax law updates
-        self.scheduler.add_job(
-            self.fetch_and_process_updates,
-            trigger=IntervalTrigger(hours=FETCH_INTERVAL_HOURS),
-            id='fetch_updates',
-            name='Fetch Tax Law Updates',
-            replace_existing=True,
-            next_run_time=datetime.now()  # Run immediately on startup
-        )
+        self.config_path = config_path
         
-        # Job for cleaning outdated documents
-        self.scheduler.add_job(
-            self.clean_outdated_documents,
-            trigger=CronTrigger(day_of_week='mon', hour=2, minute=0),  # Run weekly on Monday at 2 AM
-            id='clean_documents',
-            name='Clean Outdated Documents',
-            replace_existing=True
-        )
+        # Load configuration
+        with open(config_path, 'r') as f:
+            self.config = json.load(f)
         
-        # Add a status reporting job
-        self.scheduler.add_job(
-            self.report_status,
-            trigger=IntervalTrigger(days=1),  # Daily status report
-            id='status_report',
-            name='Status Report',
-            replace_existing=True,
-            next_run_time=datetime.now() + timedelta(minutes=5)  # First run after 5 minutes
-        )
+        # Initialize components
+        self.fetcher = DocumentFetcher(config_path)
+        self.processor = DocumentProcessor()
+        self.indexer = DocumentIndexer()
         
-        logger.info("Scheduled jobs setup completed")
-    
-    def fetch_and_process_updates(self):
-        """Fetch and process tax law updates."""
-        try:
-            logger.info("Starting scheduled fetch and process job")
-            start_time = time.time()
-            
-            # Fetch updates from all sources
-            updates = self.fetcher.fetch_all_updates()
-            
-            if updates:
-                logger.info(f"Found {len(updates)} new tax law updates, processing...")
-                # Process downloaded documents
-                processed_count = self.processor.process_documents(updates)
-                logger.info(f"Successfully processed {processed_count} documents")
-            else:
-                logger.info("No new tax law updates found")
-            
-            elapsed_time = time.time() - start_time
-            logger.info(f"Completed fetch and process job in {elapsed_time:.2f} seconds")
-        
-        except Exception as e:
-            logger.error(f"Error in fetch and process job: {e}")
-    
-    def clean_outdated_documents(self):
-        """Clean outdated documents from the database."""
-        try:
-            logger.info("Starting scheduled document cleanup job")
-            
-            # Clean documents older than the specified threshold
-            removed_count = self.processor.clean_outdated_documents(days_threshold=CLEANUP_INTERVAL_DAYS)
-            
-            logger.info(f"Document cleanup completed, removed {removed_count} outdated documents")
-        
-        except Exception as e:
-            logger.error(f"Error in document cleanup job: {e}")
-    
-    def report_status(self):
-        """Generate and log a status report."""
-        try:
-            logger.info("Generating status report")
-            
-            # Here you could add code to generate a more detailed status report,
-            # such as counting documents in the database, checking disk usage, etc.
-            
-            logger.info("Status report: AI Tax Law Fetcher Agent is running normally")
-        
-        except Exception as e:
-            logger.error(f"Error generating status report: {e}")
+        # Set up logging
+        self.logger = logging.getLogger('document_scheduler')
+        if not self.logger.handlers:
+            handler = logging.StreamHandler()
+            formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            handler.setFormatter(formatter)
+            self.logger.addHandler(handler)
+            self.logger.setLevel(logging.INFO)
     
     def start(self):
-        """Start the scheduler."""
-        try:
-            logger.info("Starting Tax Law Update Scheduler")
-            self.scheduler.start()
-            
-            # Set up signal handlers for graceful shutdown
-            signal.signal(signal.SIGINT, self._handle_shutdown)
-            signal.signal(signal.SIGTERM, self._handle_shutdown)
-            
-            # Keep the main thread alive (if run directly)
-            while True:
-                time.sleep(1)
+        """Start all scheduled jobs"""
+        self.logger.info("Starting document scheduler")
         
-        except (KeyboardInterrupt, SystemExit):
-            self.shutdown()
+        # Schedule daily jobs
+        self._schedule_by_frequency('daily', hour=2, minute=0)
+        
+        # Schedule weekly jobs
+        self._schedule_by_frequency('weekly', day_of_week='mon', hour=3, minute=0)
+        
+        # Schedule monthly jobs
+        self._schedule_by_frequency('monthly', day=1, hour=4, minute=0)
+        
+        # Add health check job
+        self.scheduler.add_job(
+            self._check_health,
+            'interval',
+            hours=1,
+            id="health_check"
+        )
+        
+        # Start the scheduler
+        self.scheduler.start()
+        self.logger.info("Document scheduler started successfully")
     
-    def _handle_shutdown(self, signum, frame):
-        """Handle shutdown signals (SIGINT, SIGTERM)."""
-        logger.info(f"Received signal {signum}, shutting down...")
-        self.shutdown()
-        sys.exit(0)
+    def _schedule_by_frequency(self, frequency, **cron_args):
+        """Schedule jobs based on frequency"""
+        sources = []
+        for source, freq in self.config['updateFrequency'].items():
+            if freq.lower() == frequency.lower():
+                sources.append(source)
+        
+        if not sources:
+            return
+        
+        for source in sources:
+            job_id = f"{frequency}_{source.replace(' ', '_')}"
+            self.scheduler.add_job(
+                self._fetch_and_index_for_source,
+                CronTrigger(**cron_args),
+                args=[source],
+                id=job_id
+            )
+            self.logger.info(f"Scheduled {frequency} job for {source}")
     
-    def shutdown(self):
-        """Shutdown the scheduler and perform cleanup."""
-        logger.info("Shutting down Tax Law Update Scheduler")
+    def _fetch_and_index_for_source(self, source_name):
+        """Fetch and index documents for a specific source"""
+        self.logger.info(f"Starting scheduled update for {source_name}")
+        
+        try:
+            # Filter documents by source
+            source_docs = [doc for doc in self.config['documents'] 
+                        if doc.get('source') in source_name]
+            
+            if not source_docs:
+                self.logger.warning(f"No documents configured for source: {source_name}")
+                return
+            
+            successful_fetches = 0
+            for doc in source_docs:
+                try:
+                    self.fetcher.fetch_document(doc)
+                    successful_fetches += 1
+                except Exception as e:
+                    self.logger.error(f"Error fetching document {doc['url']}: {str(e)}")
+            
+            if successful_fetches > 0:
+                # Process newly downloaded files
+                self.logger.info("Processing downloaded files")
+                processed_files = self.processor.process_new_files()
+                
+                # Index processed files
+                if processed_files:
+                    self.logger.info(f"Indexing {len(processed_files)} processed files")
+                    self.indexer.index_documents(processed_files)
+                    self.logger.info("Indexing complete")
+                else:
+                    self.logger.info("No new files to index")
+            
+            self.logger.info(f"Completed scheduled update for {source_name}")
+            
+        except Exception as e:
+            self.logger.error(f"Error in scheduled update for {source_name}: {str(e)}")
+    
+    def _check_health(self):
+        """Run health checks"""
+        try:
+            monitor = HealthMonitor()
+            rag_health = monitor.check_rag_health()
+            index_freshness = monitor.check_index_freshness()
+            
+            if not rag_health or not index_freshness:
+                self.logger.warning("Health check failed, consider troubleshooting the system")
+            else:
+                self.logger.info("Health check passed successfully")
+        except Exception as e:
+            self.logger.error(f"Error during health check: {str(e)}")
+    
+    def stop(self):
+        """Stop the scheduler"""
         self.scheduler.shutdown()
+        self.logger.info("Document scheduler stopped")
+    
+    def run_now(self, source_name=None):
+        """Run a job immediately"""
+        if source_name:
+            self.logger.info(f"Running immediate update for {source_name}")
+            self._fetch_and_index_for_source(source_name)
+        else:
+            self.logger.info("Running immediate update for all sources")
+            # Run for all configured frequencies
+            for source in self.config['updateFrequency'].keys():
+                self._fetch_and_index_for_source(source)
+        
+        self.logger.info("Immediate update completed")
 
-
+# Simple test to run if this module is run directly
 if __name__ == "__main__":
-    # Setup basic logging for standalone testing
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
+    logging.basicConfig(level=logging.INFO)
+    scheduler = DocumentScheduler()
     
-    # Import required components
-    from src.fetcher.fetch_irs_updates import IRSUpdateFetcher
-    from src.preprocessing.preprocess_documents import DocumentProcessor
+    # Run immediately for testing
+    scheduler.run_now()
     
-    # Create components
-    fetcher = IRSUpdateFetcher()
-    processor = DocumentProcessor()
-    
-    # Create and start scheduler (will run once immediately)
-    scheduler = TaxLawUpdateScheduler(fetcher, processor)
-    
-    try:
-        scheduler.start()
-    except KeyboardInterrupt:
-        print("\nShutting down scheduler...")
-        scheduler.shutdown()
+    # Uncomment to start the scheduler
+    # scheduler.start()
+    # 
+    # # Keep the script running
+    # try:
+    #     while True:
+    #         time.sleep(60)
+    # except KeyboardInterrupt:
+    #     scheduler.stop()

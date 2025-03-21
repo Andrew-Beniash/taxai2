@@ -1,25 +1,27 @@
 #!/bin/bash
 
-# Tax Law Fetcher Agent Runner Script
-# This script sets up the environment and runs the Tax Law Fetcher agent
+# Tax Law AI Agent Runner Script
 
-# Set up virtual environment if it doesn't exist
-if [ ! -d "venv" ]; then
+# Create a virtual environment if it doesn't exist
+if [ ! -d ".venv" ]; then
     echo "Creating virtual environment..."
-    python3 -m venv venv
+    python3 -m venv .venv
 fi
 
-# Activate virtual environment
-echo "Activating virtual environment..."
-source venv/bin/activate
+# Activate the virtual environment
+source .venv/bin/activate
 
 # Install dependencies
 echo "Installing dependencies..."
 pip install -r requirements.txt
 
-# Run the agent
-echo "Starting Tax Law Fetcher Agent..."
-python src/main.py
+# Create necessary directories
+mkdir -p data/downloads
+mkdir -p data/processed
+mkdir -p data/uploads
+mkdir -p data/stats
+mkdir -p logs
 
-# Deactivate virtual environment on exit
-deactivate
+# Run the AI agent
+echo "Starting Tax Law AI Agent..."
+python -m src.main "$@"
