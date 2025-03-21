@@ -3,8 +3,10 @@ package com.ai.taxlaw.service;
 import com.ai.taxlaw.model.Citation;
 import com.ai.taxlaw.model.QueryRequest;
 import com.ai.taxlaw.model.QueryResponse;
+import com.ai.taxlaw.service.ai.AIModelService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -67,4 +69,31 @@ public class QueryService {
     
     // The functionality from retrieveRelevantDocuments and generateAIResponse methods
     // has been moved to the AIModelService and RAGClient classes for better separation of concerns
+    
+    @Autowired
+    private RAGClient ragClient;
+    
+    @Autowired
+    private AIModelService aiModelService;
+    
+    /**
+     * Retrieve relevant tax law documents based on the query.
+     * 
+     * @param query The user's tax law query
+     * @return A list of relevant citations
+     */
+    private List<Citation> retrieveRelevantDocuments(String query) {
+        return ragClient.retrieveRelevantDocuments(query);
+    }
+    
+    /**
+     * Generate an AI response with the retrieved documents.
+     * 
+     * @param query The user's tax law query
+     * @param relevantDocs List of relevant citations
+     * @return AI-generated response
+     */
+    private String generateAIResponse(String query, List<Citation> relevantDocs) {
+        return aiModelService.generateResponse(query);
+    }
 }
