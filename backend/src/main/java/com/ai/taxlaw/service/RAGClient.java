@@ -108,9 +108,13 @@ public class RAGClient {
      * 
      * @param query The user's tax law query
      * @return The AI-generated response
+     * @deprecated This method is superseded by retrieveRelevantDocuments() which is now used by AIModelService
      */
+    @Deprecated
     public String fetchResponse(String query) {
-        // Placeholder implementation until full RAG system is ready
+        // This method is kept for backward compatibility but should not be used for new code
+        // The actual integration is now handled by AIModelService
+        logger.warn("Using deprecated fetchResponse method - use retrieveRelevantDocuments instead");
         return "Based on IRS Publication 17 and relevant tax code sections, " +
                "the answer to your question about \"" + query + "\" involves detailed tax considerations. " +
                "Please consult with a tax professional for personalized advice.";

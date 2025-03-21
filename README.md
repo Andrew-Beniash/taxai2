@@ -83,6 +83,10 @@ Run the test suite:
 
 - `browser-extension/` - Chrome extension UI
 - `backend/` - Java/Spring Boot API
+  - `src/main/java/com/ai/taxlaw/service/ai/` - AI Model Integration components
+    - `AIModelService.java` - Integrates RAG with OpenAI
+    - `ResponseFormatter.java` - Formats AI responses with proper citations
+    - `CitationManager.java` - Ensures accurate and context-aware citations
 - `rag-engine/` - C++ RAG implementation
 - `ai-agent/` - Python autonomous agent
 - `database/` - SQLite/DuckDB schemas
