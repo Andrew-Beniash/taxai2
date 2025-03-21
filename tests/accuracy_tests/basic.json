@@ -1,0 +1,46 @@
+{
+  "name": "basic",
+  "description": "Basic test set for evaluating tax law AI responses",
+  "tests": [
+    {
+      "id": "basic-001",
+      "query": "What is the standard deduction for a single filer in 2023?",
+      "expected_content": [
+        "standard deduction", "single", "2023", "$13,850"
+      ],
+      "expected_citations": ["IRS Publication 501", "IRS"]
+    },
+    {
+      "id": "basic-002",
+      "query": "When is the tax filing deadline for 2023 taxes?",
+      "expected_content": [
+        "April 15", "2024"
+      ],
+      "expected_citations": ["IRS"]
+    },
+    {
+      "id": "basic-003",
+      "query": "What is the tax treatment for a 401(k) withdrawal before age 59 1/2?",
+      "expected_content": [
+        "early withdrawal", "penalty", "10%", "income tax"
+      ],
+      "expected_citations": ["IRS Publication 575", "IRC Section 72(t)"]
+    },
+    {
+      "id": "basic-004",
+      "query": "How long should I keep tax records?",
+      "expected_content": [
+        "3 years", "audit", "records"
+      ],
+      "expected_citations": ["IRS Publication 17", "IRS"]
+    },
+    {
+      "id": "basic-005",
+      "query": "What is the gift tax exclusion amount for 2023?",
+      "expected_content": [
+        "gift tax", "annual exclusion", "2023", "$17,000"
+      ],
+      "expected_citations": ["IRS", "Publication 559"]
+    }
+  ]
+}
