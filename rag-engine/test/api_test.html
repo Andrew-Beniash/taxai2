@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG Engine API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .response {
+            margin-top: 20px;
+        }
+        .documents {
+            margin-top: 20px;
+        }
+        .document {
+            border: 1px solid #ddd;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .document-title {
+            font-weight: bold;
+        }
+        .document-section {
+            color: #666;
+        }
+        .document-snippet {
+            margin-top: 5px;
+        }
+        .citations {
+            margin-top: 10px;
+        }
+        .citation {
+            margin-top: 5px;
+            font-size: 0.9em;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <h1>RAG Engine API Test</h1>
+    
+    <div class="form-group">
+        <label for="api-url">API URL:</label>
+        <input type="text" id="api-url" value="http://localhost:5000/api/query">
+    </div>
+    
+    <div class="form-group">
+        <label for="query">Tax Law Query:</label>
+        <textarea id="query" rows="3" placeholder="Enter your tax law query here...">What are the tax implications of cryptocurrency?</textarea>
+    </div>
+    
+    <button id="send-query">Send Query</button>
+    
+    <div id="loading" style="display: none; margin-top: 15px;">
+        Processing query, please wait...
+    </div>
+    
+    <div class="response" id="response" style="display: none;">
+        <h2>Response</h2>
+        <div id="answer"></div>
+        
+        <div class="documents">
+            <h3>Relevant Documents</h3>
+            <div id="documents-container"></div>
+        </div>
+        
+        <h3>Raw Response</h3>
+        <pre id="raw-response"></pre>
+    </div>
+    
+    <script>
+        document.getElementById('send-query').addEventListener('click', async () => {
+            const apiUrl = document.getElementById('api-url').value;
+            const query = document.getElementById('query').value;
+            
+            // Show loading indicator
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('response').style.display = 'none';
+            
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ query })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Display raw response
+                document.getElementById('raw-response').textContent = JSON.stringify(data, null, 2);
+                
+                // Display answer
+                document.getElementById('answer').innerHTML = data.response.answer.replace(/\n/g, '<br>');
+                
+                // Display documents
+                const documentsContainer = document.getElementById('documents-container');
+                documentsContainer.innerHTML = '';
+                
+                if (data.documents && data.documents.length > 0) {
+                    data.documents.forEach((doc, index) => {
+                        const docElement = document.createElement('div');
+                        docElement.className = 'document';
+                        
+                        const titleElement = document.createElement('div');
+                        titleElement.className = 'document-title';
+                        titleElement.textContent = `[${index + 1}] ${doc.title}`;
+                        
+                        const sectionElement = document.createElement('div');
+                        sectionElement.className = 'document-section';
+                        sectionElement.textContent = `Source: ${doc.doc_id}, Section: ${doc.section}`;
+                        
+                        const snippetElement = document.createElement('div');
+                        snippetElement.className = 'document-snippet';
+                        snippetElement.textContent = doc.snippet;
+                        
+                        docElement.appendChild(titleElement);
+                        docElement.appendChild(sectionElement);
+                        docElement.appendChild(snippetElement);
+                        
+                        documentsContainer.appendChild(docElement);
+                    });
+                } else {
+                    documentsContainer.textContent = 'No relevant documents found.';
+                }
+                
+                // Show response
+                document.getElementById('response').style.display = 'block';
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('raw-response').textContent = `Error: ${error.message}`;
+                document.getElementById('response').style.display = 'block';
+            } finally {
+                // Hide loading indicator
+                document.getElementById('loading').style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

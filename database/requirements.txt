@@ -1,0 +1,17 @@
+# Requirements for tax law knowledge base
+# Database tools
+sqlite3
+
+# Document parsing and preprocessing
+PyPDF2==3.0.1
+beautifulsoup4==4.12.2
+requests==2.31.0
+
+# Vector embedding and indexing
+sentence-transformers==2.2.2
+faiss-cpu==1.7.4
+numpy==1.24.3
+onnxruntime==1.15.1
+
+# Utilities
+tqdm==4.66.1
