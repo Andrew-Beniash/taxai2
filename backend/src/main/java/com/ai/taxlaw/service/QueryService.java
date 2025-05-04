@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -40,18 +41,28 @@ public class QueryService {
         logger.info("Processing query: {}", request);
         
         try {
-            // TODO: Implement actual RAG retrieval logic
-            // This is a placeholder for the RAG and OpenAI integration
+            // Simple implementation that directly uses OpenAI
+            // For testing purposes, without the full RAG implementation yet
+            String query = request.getQuery();
+            String context = "This query is about tax law. Provide accurate information based on US tax regulations.";
             
-            // 1. Call the RAG system to retrieve relevant tax law documents
-            List<Citation> relevantDocs = retrieveRelevantDocuments(request.getQuery());
+            // Use OpenAI to generate a response
+            String aiResponse = openAIService.generateResponse(query, context);
             
-            // 2. Generate response using OpenAI with the retrieved context
-            String aiResponse = generateAIResponse(request.getQuery(), relevantDocs);
-            
-            // 3. Format the response with inline citations
+            // Create a response with the AI-generated text
             QueryResponse response = new QueryResponse(aiResponse);
-            response.setCitations(relevantDocs);
+            
+            // Add some sample citations for now
+            List<Citation> citations = new ArrayList<>();
+            citations.add(new Citation(
+                "IRS Publication", 
+                "Your Federal Income Tax", 
+                "The standard deduction is a specific dollar amount that reduces the amount of income on which you are taxed.", 
+                "https://www.irs.gov/publications", 
+                "IRS-Pub-17"
+            ));
+            
+            response.setCitations(citations);
             
             long processingTime = System.currentTimeMillis() - startTime;
             response.setProcessingTimeMs(processingTime);
@@ -75,6 +86,9 @@ public class QueryService {
     
     @Autowired
     private AIModelService aiModelService;
+    
+    @Autowired
+    private OpenAIService openAIService;
     
     /**
      * Retrieve relevant tax law documents based on the query.

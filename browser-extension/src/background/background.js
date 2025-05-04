@@ -171,13 +171,11 @@ async function queryAI(query, context = {}) {
     
     const data = await response.json();
     
-    // For development purposes, if the backend isn't ready yet,
-    // return mock data
-    if (process.env.NODE_ENV === 'development' && data.mock) {
-      return getMockResponse(query);
-    }
-    
-    return data;
+    // Format response for the UI
+    return {
+      text: data.text || data.response || 'No response received from the server.',
+      citations: data.citations || []
+    };
   } catch (error) {
     console.error('Error in queryAI:', error);
     

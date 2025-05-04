@@ -2,6 +2,7 @@ package com.ai.taxlaw.controller;
 
 import com.ai.taxlaw.model.QueryRequest;
 import com.ai.taxlaw.model.QueryResponse;
+import com.ai.taxlaw.service.OpenAIService;
 import com.ai.taxlaw.service.QueryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +26,9 @@ public class QueryController {
     @Autowired
     private QueryService queryService;
     
+    @Autowired
+    private OpenAIService openAIService;
+    
     /**
      * Submit a tax law query and receive an AI-generated response.
      * 
@@ -41,21 +45,50 @@ public class QueryController {
         }
         
         try {
-            // Temporary mock response for testing
-            QueryResponse mockResponse = new QueryResponse("This is a mock response for testing: " + request.getQuery());
-            mockResponse.setProcessingTimeMs(500);
-            return ResponseEntity.ok(mockResponse);
-            
-            // Comment out the actual service call for now
-            // QueryResponse response = queryService.processQuery(request);
-            // logger.info("Generated response: {}", response);
-            // return ResponseEntity.ok(response);
+            // Use the QueryService to process the query
+            QueryResponse response = queryService.processQuery(request);
+            logger.info("Generated response: {}", response);
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             logger.error("Error processing query: {}", e.getMessage(), e);
             QueryResponse errorResponse = new QueryResponse("An error occurred: " + e.getMessage());
             return ResponseEntity.ok(errorResponse);
         }
     }
+    
+    /**
+     * Test endpoint specifically for testing OpenAI integration.
+     * 
+     * @param request The test query request
+     * @return A response with the OpenAI-generated answer
+     */
+    @PostMapping("/test/openai")
+    public ResponseEntity<Map<String, String>> testOpenAI(@RequestBody Map<String, String> request) {
+        logger.info("Received OpenAI test request: {}", request);
+        
+        String query = request.getOrDefault("query", "What are the basic tax filing deadlines?");
+        String context = "Tax filing deadlines vary by entity type. For individuals, the deadline " +
+                         "is generally April 15th, but can be extended to October 15th.";
+        
+        try {
+            String response = openAIService.generateResponse(query, context);
+            
+            Map<String, String> result = Map.of(
+                "query", query,
+                "response", response
+            );
+            
+            return ResponseEntity.ok(result);
+            
+        } catch (Exception e) {
+            logger.error("Error in OpenAI test: {}", e.getMessage(), e);
+            return ResponseEntity.ok(Map.of(
+                "query", query,
+                "response", "Error: " + e.getMessage()
+            ));
+        }
+    }
+    
     /**
      * Health check endpoint.
      * 

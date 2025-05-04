@@ -10,6 +10,7 @@ import java.util.ArrayList;
 public class QueryResponse {
     
     private String answer;
+    private String text; // Added for compatibility with browser extension
     private List<Citation> citations;
     private long processingTimeMs;
     
@@ -19,6 +20,7 @@ public class QueryResponse {
     
     public QueryResponse(String answer) {
         this.answer = answer;
+        this.text = answer; // Set text to the same value for browser extension compatibility
         this.citations = new ArrayList<>();
     }
     
@@ -28,6 +30,7 @@ public class QueryResponse {
     
     public void setAnswer(String answer) {
         this.answer = answer;
+        this.text = answer; // Keep text in sync with answer
     }
     
     public List<Citation> getCitations() {
@@ -42,6 +45,14 @@ public class QueryResponse {
         this.citations.add(citation);
     }
     
+    public String getText() {
+        return text;
+    }
+    
+    public void setText(String text) {
+        this.text = text;
+    }
+    
     public long getProcessingTimeMs() {
         return processingTimeMs;
     }
@@ -54,6 +65,7 @@ public class QueryResponse {
     public String toString() {
         return "QueryResponse{" +
                 "answer='" + (answer != null ? answer.substring(0, Math.min(50, answer.length())) + "..." : "null") + '\'' +
+                ", text='" + (text != null ? text.substring(0, Math.min(50, text.length())) + "..." : "null") + '\'' +
                 ", citations=" + citations.size() +
                 ", processingTimeMs=" + processingTimeMs +
                 '}';
